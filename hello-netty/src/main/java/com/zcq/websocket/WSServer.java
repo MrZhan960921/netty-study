@@ -20,7 +20,7 @@ public class WSServer {
             ServerBootstrap server = new ServerBootstrap();
             server.group(mainGroup, subGroup)
                     .channel(NioServerSocketChannel.class)
-                    .childHandler(null);
+                    .childHandler(new WSServerInitialzer());
 
             ChannelFuture future = server.bind(8088).sync();
 
