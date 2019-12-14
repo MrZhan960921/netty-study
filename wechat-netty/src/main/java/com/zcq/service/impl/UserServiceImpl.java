@@ -1,10 +1,13 @@
 package com.zcq.service.impl;
 
 
+import com.zcq.enums.MsgActionEnum;
 import com.zcq.enums.MsgSignFlagEnum;
 import com.zcq.enums.SearchFriendsStatusEnum;
 import com.zcq.mapper.*;
 import com.zcq.netty.ChatMsg;
+import com.zcq.netty.DataContent;
+import com.zcq.netty.UserChannelRel;
 import com.zcq.pojo.FriendsRequest;
 import com.zcq.pojo.MyFriends;
 import com.zcq.pojo.Users;
@@ -13,6 +16,7 @@ import com.zcq.pojo.vo.MyFriendsVO;
 import com.zcq.service.UserService;
 import com.zcq.utils.FastDFSClient;
 import com.zcq.utils.FileUtils;
+import com.zcq.utils.JsonUtils;
 import com.zcq.utils.QRCodeUtils;
 import io.netty.channel.Channel;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
@@ -207,6 +211,17 @@ public class UserServiceImpl implements UserService {
         saveFriends(sendUserId, acceptUserId);
         saveFriends(acceptUserId, sendUserId);
         deleteFriendRequest(sendUserId, acceptUserId);
+
+        //使用websocket主动推送消息给请求发起者，更新他的通讯录为最新
+        Channel sendChannel = UserChannelRel.get(sendUserId);
+        if (sendChannel != null) {
+            // 使用websocket主动推送消息到请求发起者，更新他的通讯录列表为最新
+            DataContent dataContent = new DataContent();
+            dataContent.setAction(MsgActionEnum.PULL_FRIEND.type);
+            sendChannel.writeAndFlush(
+                    new TextWebSocketFrame(
+                            JsonUtils.objectToJson(dataContent)));
+        }
     }
 
     @Transactional(propagation = Propagation.SUPPORTS)
