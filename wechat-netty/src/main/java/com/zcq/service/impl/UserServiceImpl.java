@@ -1,11 +1,10 @@
 package com.zcq.service.impl;
 
 
+import com.zcq.enums.MsgSignFlagEnum;
 import com.zcq.enums.SearchFriendsStatusEnum;
-import com.zcq.mapper.FriendsRequestMapper;
-import com.zcq.mapper.MyFriendsMapper;
-import com.zcq.mapper.UsersMapper;
-import com.zcq.mapper.UsersMapperCustom;
+import com.zcq.mapper.*;
+import com.zcq.netty.ChatMsg;
 import com.zcq.pojo.FriendsRequest;
 import com.zcq.pojo.MyFriends;
 import com.zcq.pojo.Users;
@@ -44,6 +43,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UsersMapperCustom usersMapperCustom;
+
+    @Autowired
+    private ChatMsgMapper chatMsgMapper;
 
     @Autowired
     private Sid sid;
@@ -224,4 +226,27 @@ public class UserServiceImpl implements UserService {
         myFriendsMapper.insert(myFriends);
     }
 
+    @Transactional(propagation = Propagation.REQUIRED)
+    @Override
+    public String saveMsg(ChatMsg chatMsg) {
+
+        com.zcq.pojo.ChatMsg msgDB = new com.zcq.pojo.ChatMsg();
+        String msgId = sid.nextShort();
+        msgDB.setId(msgId);
+        msgDB.setAcceptUserId(chatMsg.getReceiverId());
+        msgDB.setSendUserId(chatMsg.getSenderId());
+        msgDB.setCreateTime(new Date());
+        msgDB.setSignFlag(MsgSignFlagEnum.unsign.type);
+        msgDB.setMsg(chatMsg.getMsg());
+
+        chatMsgMapper.insert(msgDB);
+
+        return msgId;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    @Override
+    public void updateMsgSigned(List<String> msgIdList) {
+        usersMapperCustom.batchUpdateMsgSigned(msgIdList);
+    }
 }
