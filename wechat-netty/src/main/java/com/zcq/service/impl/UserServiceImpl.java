@@ -5,9 +5,12 @@ import com.zcq.enums.SearchFriendsStatusEnum;
 import com.zcq.mapper.FriendsRequestMapper;
 import com.zcq.mapper.MyFriendsMapper;
 import com.zcq.mapper.UsersMapper;
+import com.zcq.mapper.UsersMapperCustom;
 import com.zcq.pojo.FriendsRequest;
 import com.zcq.pojo.MyFriends;
 import com.zcq.pojo.Users;
+import com.zcq.pojo.vo.FriendRequestVO;
+import com.zcq.pojo.vo.MyFriendsVO;
 import com.zcq.service.UserService;
 import com.zcq.utils.FastDFSClient;
 import com.zcq.utils.FileUtils;
@@ -38,6 +41,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private FriendsRequestMapper friendsRequestMapper;
+
+    @Autowired
+    private UsersMapperCustom usersMapperCustom;
 
     @Autowired
     private Sid sid;
@@ -175,6 +181,47 @@ public class UserServiceImpl implements UserService {
             request.setRequestDateTime(new Date());
             friendsRequestMapper.insert(request);
         }
+    }
+
+    @Transactional(propagation = Propagation.SUPPORTS)
+    @Override
+    public List<FriendRequestVO> queryFriendRequestList(String acceptUserId) {
+        return usersMapperCustom.queryFriendRequestList(acceptUserId);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    @Override
+    public void deleteFriendRequest(String sendUserId, String acceptUserId) {
+        Example fre = new Example(FriendsRequest.class);
+        Criteria frc = fre.createCriteria();
+        frc.andEqualTo("sendUserId", sendUserId);
+        frc.andEqualTo("acceptUserId", acceptUserId);
+        friendsRequestMapper.deleteByExample(fre);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    @Override
+    public void passFriendRequest(String sendUserId, String acceptUserId) {
+        saveFriends(sendUserId, acceptUserId);
+        saveFriends(acceptUserId, sendUserId);
+        deleteFriendRequest(sendUserId, acceptUserId);
+    }
+
+    @Transactional(propagation = Propagation.SUPPORTS)
+    @Override
+    public List<MyFriendsVO> queryMyFriends(String userId) {
+        List<MyFriendsVO> myFirends = usersMapperCustom.queryMyFriends(userId);
+        return myFirends;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    private void saveFriends(String sendUserId, String acceptUserId) {
+        MyFriends myFriends = new MyFriends();
+        String recordId = sid.nextShort();
+        myFriends.setId(recordId);
+        myFriends.setMyFriendUserId(acceptUserId);
+        myFriends.setMyUserId(sendUserId);
+        myFriendsMapper.insert(myFriends);
     }
 
 }

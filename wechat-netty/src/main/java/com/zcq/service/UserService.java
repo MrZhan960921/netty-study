@@ -2,6 +2,8 @@ package com.zcq.service;
 
 
 import com.zcq.pojo.Users;
+import com.zcq.pojo.vo.FriendRequestVO;
+import com.zcq.pojo.vo.MyFriendsVO;
 
 import java.util.List;
 
@@ -40,4 +42,27 @@ public interface UserService {
      * @Description: 添加好友请求记录，保存到数据库
      */
     public void sendFriendRequest(String myUserId, String friendUsername);
+
+    /**
+     * @Description: 查询好友请求
+     */
+    public List<FriendRequestVO> queryFriendRequestList(String acceptUserId);
+
+    /**
+     * @Description: 删除好友请求记录
+     */
+    public void deleteFriendRequest(String sendUserId, String acceptUserId);
+
+    /**
+     * @Description: 通过好友请求
+     * 				1. 保存好友
+     * 				2. 逆向保存好友
+     * 				3. 删除好友请求记录
+     */
+    public void passFriendRequest(String sendUserId, String acceptUserId);
+
+    /**
+     * @Description: 查询好友列表
+     */
+    public List<MyFriendsVO> queryMyFriends(String userId);
 }
