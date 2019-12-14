@@ -1,14 +1,12 @@
 package com.zcq.controller;
 
 
+import com.zcq.enums.SearchFriendsStatusEnum;
 import com.zcq.pojo.Users;
 import com.zcq.pojo.bo.UsersBO;
 import com.zcq.pojo.vo.UsersVO;
 import com.zcq.service.UserService;
-import com.zcq.utils.FastDFSClient;
-import com.zcq.utils.FileUtils;
-import com.zcq.utils.IMoocJSONResult;
-import com.zcq.utils.MD5Utils;
+import com.zcq.utils.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +27,8 @@ public class UserController {
 
     @Autowired
     private FastDFSClient fastDFSClient;
+
+
 
     /**
      * @Description: 用户注册/登录
@@ -100,5 +100,76 @@ public class UserController {
         Users result = userService.updateUserInfo(user);
 
         return IMoocJSONResult.ok(result);
+    }
+
+
+    /**
+     * @Description: 设置用户昵称
+     */
+    @PostMapping("/setNickname")
+    public IMoocJSONResult setNickname(@RequestBody UsersBO userBO) throws Exception {
+
+        Users user = new Users();
+        user.setId(userBO.getUserId());
+        user.setNickname(userBO.getNickname());
+
+        Users result = userService.updateUserInfo(user);
+
+        return IMoocJSONResult.ok(result);
+    }
+
+    /**
+     * @Description: 搜索好友接口, 根据账号做匹配查询而不是模糊查询
+     */
+    @PostMapping("/search")
+    public IMoocJSONResult searchUser(String myUserId, String friendUsername)
+            throws Exception {
+
+        // 0. 判断 myUserId friendUsername 不能为空
+        if (StringUtils.isBlank(myUserId)
+                || StringUtils.isBlank(friendUsername)) {
+            return IMoocJSONResult.errorMsg("");
+        }
+
+        // 前置条件 - 1. 搜索的用户如果不存在，返回[无此用户]
+        // 前置条件 - 2. 搜索账号是你自己，返回[不能添加自己]
+        // 前置条件 - 3. 搜索的朋友已经是你的好友，返回[该用户已经是你的好友]
+        Integer status = userService.preconditionSearchFriends(myUserId, friendUsername);
+        if (status == SearchFriendsStatusEnum.SUCCESS.status) {
+            Users user = userService.queryUserInfoByUsername(friendUsername);
+            UsersVO userVO = new UsersVO();
+            BeanUtils.copyProperties(user, userVO);
+            return IMoocJSONResult.ok(userVO);
+        } else {
+            String errorMsg = SearchFriendsStatusEnum.getMsgByKey(status);
+            return IMoocJSONResult.errorMsg(errorMsg);
+        }
+    }
+
+    /**
+     * @Description: 发送添加好友的请求
+     */
+    @PostMapping("/addFriendRequest")
+    public IMoocJSONResult addFriendRequest(String myUserId, String friendUsername)
+            throws Exception {
+
+        // 0. 判断 myUserId friendUsername 不能为空
+        if (StringUtils.isBlank(myUserId)
+                || StringUtils.isBlank(friendUsername)) {
+            return IMoocJSONResult.errorMsg("");
+        }
+
+        // 前置条件 - 1. 搜索的用户如果不存在，返回[无此用户]
+        // 前置条件 - 2. 搜索账号是你自己，返回[不能添加自己]
+        // 前置条件 - 3. 搜索的朋友已经是你的好友，返回[该用户已经是你的好友]
+        Integer status = userService.preconditionSearchFriends(myUserId, friendUsername);
+        if (status == SearchFriendsStatusEnum.SUCCESS.status) {
+            userService.sendFriendRequest(myUserId, friendUsername);
+        } else {
+            String errorMsg = SearchFriendsStatusEnum.getMsgByKey(status);
+            return IMoocJSONResult.errorMsg(errorMsg);
+        }
+
+        return IMoocJSONResult.ok();
     }
 }
