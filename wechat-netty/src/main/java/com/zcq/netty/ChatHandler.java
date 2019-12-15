@@ -24,7 +24,7 @@ import java.util.List;
 public class ChatHandler extends SimpleChannelInboundHandler<TextWebSocketFrame> {
 
     // 用于记录和管理所有客户端的channle
-    private static ChannelGroup users =
+    public static ChannelGroup users =
             new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
     @Override
@@ -115,6 +115,7 @@ public class ChatHandler extends SimpleChannelInboundHandler<TextWebSocketFrame>
             }
         } else if (action == MsgActionEnum.KEEPALIVE.type) {
             //2.4  心跳类型的消息
+            System.out.println("收到来自channel为[" + currentChannel + "]的心跳包...");
         }
     }
 

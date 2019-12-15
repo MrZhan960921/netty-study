@@ -241,4 +241,21 @@ public class UserController {
         return IMoocJSONResult.ok(myFirends);
     }
 
+
+    /**
+     *
+     * @Description: 用户手机端获取未签收的消息列表
+     */
+    @PostMapping("/getUnReadMsgList")
+    public IMoocJSONResult getUnReadMsgList(String acceptUserId) {
+        // 0. userId 判断不能为空
+        if (StringUtils.isBlank(acceptUserId)) {
+            return IMoocJSONResult.errorMsg("");
+        }
+
+        // 查询列表
+        List<com.zcq.pojo.ChatMsg> unreadMsgList = userService.getUnReadMsgList(acceptUserId);
+
+        return IMoocJSONResult.ok(unreadMsgList);
+    }
 }
